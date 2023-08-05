@@ -1,0 +1,76 @@
+{
+  "name": "vue3-vite-elctron-boilerplate",
+  "version": "0.0.0",
+  "main": "packages/backend/background.js",
+  "author": "paymentlogs",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 5050",
+    "electron:serve": "wait-on tcp:8080 && cross-env NODE_ENV=development electron .",
+    "app:serve": "concurrently -k \"yarn dev\" \"yarn electron:serve\"",
+    "pack": "electron-builder --dir",
+    "build:electron": "electron-builder build",
+    "bytenode": "electron ./packages/scripts/bytenode.js",
+    "app:build": "yarn build && yarn bytenode && yarn build:electron",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "bytenode": "^1.5.0",
+    "electron": "^25.0.1",
+    "electron-store": "^8.1.0",
+    "moment": "^2.29.4",
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.4",
+    "vuex": "^4.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.2.3",
+    "asarmor": "^2.1.0-beta.10",
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
+    "electron-builder": "^24.6.3",
+    "javascript-obfuscator": "^4.0.2",
+    "rollup-plugin-obfuscator": "^1.0.3",
+    "rollup-plugin-uglify": "^6.0.4",
+    "uglify-js": "^3.17.4",
+    "vite": "^4.4.8",
+    "vite-plugin-html": "^3.2.0",
+    "wait-on": "^7.0.1"
+  },
+  "build": {
+    "afterPack": "./packages/scripts/armor.js",
+    "copyright": "Copyright © 2022 ${author}",
+    "productName": "PaymentLogs Vue Template",
+    "appId": "payment.logs",
+    "directories": {
+      "output": "Production Builds/Version ${version}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "shortcutName": "PaymentLogs Vue Template"
+    },
+    "files": [
+      "node_modules/**/*",
+      "package.json",
+      {
+        "from": "Built App/frontend",
+        "to": "packages/frontend",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "Built App/backend",
+        "to": "packages/backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  }
+}
