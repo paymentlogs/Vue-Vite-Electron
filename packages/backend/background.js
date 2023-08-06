@@ -1,6 +1,5 @@
 const { app, BrowserWindow, protocol } = require("electron");
 const path = require("path");
-const got = require("got");
 
 // LOCAL IMPORTS
 let ipcHandler;

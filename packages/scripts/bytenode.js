@@ -3,7 +3,6 @@ const fs = require("fs").promises;
 const v8 = require("v8");
 const path = require("path");
 const JavaScriptObfuscator = require("javascript-obfuscator");
-const { version } = require("../../package.json");
 const UglifyJS = require("uglify-js");
 
 v8.setFlagsFromString("--no-lazy");
@@ -44,72 +43,70 @@ const minify = (code) => {
   return result.code;
 };
 
-const formatEntryPath = (entryPath) => {
-  return {
-    source: path.join(srcPath, `/${entryPath}`),
-    build: path.join(destPath, `/${entryPath}`),
-    split: entryPath.split("/"),
-  };
-};
-
-const handleDirs = async (srcDest) => {
+const handleDirs = async (currentPath) => {
   console.log("[HANDLER]: Getting entries");
-  let entries = await fs.readdir(srcDest, { withFileTypes: true });
+  let entries = await fs.readdir(currentPath, { withFileTypes: true });
   for (let entry of entries) {
     console.log(`[HANDLER]: Managing entry: ${entry.name}`);
-    let sourcePath = path.join(srcDest, entry.name);
-    let entryPath = sourcePath.split("\\");
-    if (entryPath.length >= 11) {
-      console.log(`[HANDLER]: Formatting entry paths for entry: ${entry.name}`);
-      formattedEntryPath = entryPath.slice(11, entryPath.length).join("/");
-    }
-    let { source, build, split } = formatEntryPath(formattedEntryPath);
+    let sourcePath = path.join(currentPath, entry.name);
+    let relativePath = path.relative(srcPath, sourcePath);
+    let buildPath = path.join(destPath, relativePath);
     if (entry.isDirectory()) {
       console.log(`[HANDLER]: Managing directory: ${entry.name}`);
-      if (!(await pathExists(build))) {
+      if (!(await pathExists(buildPath))) {
         console.log(`[HANDLER]: Creating directory: ${entry.name}`);
-        await fs.mkdir(build);
+        await fs.mkdir(buildPath);
       }
       console.log(`[HANDLER]: Directory detected, working...`);
-      await handleDirs(source);
+      await handleDirs(sourcePath);
     } else {
       if (entry.name.endsWith(".js")) {
         console.log(`[HANDLER]: Compiling file: ${entry.name}`);
-        await obfuscateAndCompile(source, build, entry.name);
+        await obfuscateAndCompile(sourcePath, buildPath, entry.name);
       } else {
         console.log(`[HANDLER]: Copying to build: ${entry.name}`);
-        await fs.copyFile(source, build);
+        await fs.copyFile(sourcePath, buildPath);
       }
     }
   }
 };
 
 const obfuscateAndCompile = async (fromPath, toPath, name) => {
-  // Format the correct path for 'secured' transform
-  // @DEV: Secured files are obfuscated source files compiled to bytenode
-  let t = fromPath.split("\\");
-  t.splice(t.length - 1, 1);
-  let file = await fs.readFile(fromPath, "utf-8");
-  let securedFilePath = `${t.join("/")}/${name.replace(".js", "")}.secured.js`;
-  await fs.writeFile(securedFilePath, obfuscateFile(file));
-  // HANDLE COMPILE
+  const directoryPath = path.dirname(fromPath);
+  const fileContent = await fs.readFile(fromPath, "utf-8");
+  const securedFilePath = path.join(
+    directoryPath,
+    `${name.replace(".js", "")}.secured.js`
+  );
+
+  await fs.writeFile(securedFilePath, obfuscateFile(fileContent));
   await bytenode.compileFile(securedFilePath, toPath + "c");
   await fs.writeFile(toPath, getCodeForJsc(name.replace(".js", "")));
-  // Delete / unlink 'secured' temp. file once it is compiled with bytenode
   await fs.unlink(securedFilePath);
 };
 
-// 2 diff functions
-// 1 has a few more params for the backend script files than the frontend due to those params not being supported in frontend
 const getCodeForJsc = (name) => {
-  let code = `'use strict';\nconst bytenode = require('bytenode');\nconst fs = require('fs');\nconst v8 = require('v8');\nconst path = require('path');\n\nv8.setFlagsFromString('--no-lazy');\nif (!fs.existsSync(path.join(__dirname, './${name}.jsc')))\n{ bytenode.compileFile(path.join(__dirname, './${name}.src.js'), path.join(__dirname, './${name}.jsc')); }\n\nrequire(path.join(__dirname, './${name}.jsc'));`;
-  let obfuscatedCode = obfuscateFile(code);
-  return obfuscatedCode;
+  const code = `
+    'use strict';
+    const bytenode = require('bytenode');
+    const fs = require('fs');
+    const v8 = require('v8');
+    const path = require('path');
+
+    v8.setFlagsFromString('--no-lazy');
+    if (!fs.existsSync(path.join(__dirname, './${name}.jsc'))) {
+      bytenode.compileFile(path.join(__dirname, './${name}.src.js'), path.join(__dirname, './${name}.jsc'));
+    }
+
+    require(path.join(__dirname, './${name}.jsc'));
+  `;
+
+  return obfuscateFile(code);
 };
 
 const obfuscateFile = (code) => {
-  let minifiedCode = minify(code);
-  let obfuscationResult = JavaScriptObfuscator.obfuscate(minifiedCode, {
+  const minifiedCode = minify(code);
+  const obfuscationOptions = {
     compact: true,
     target: "node",
     controlFlowFlattening: true,
@@ -131,9 +128,13 @@ const obfuscateFile = (code) => {
     transformObjectKeys: true,
     stringArrayIndexShift: true,
     stringArrayRotate: true,
-  });
-  let obfuscatedCode = obfuscationResult.getObfuscatedCode();
-  return obfuscatedCode;
+  };
+
+  const obfuscationResult = JavaScriptObfuscator.obfuscate(
+    minifiedCode,
+    obfuscationOptions
+  );
+  return obfuscationResult.getObfuscatedCode();
 };
 
 run();
