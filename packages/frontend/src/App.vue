@@ -1,5 +1,4 @@
 <script>
-
 export default {
   data() {
     return {};
@@ -9,7 +8,7 @@ export default {
 
 <template>
   <div id="app">
-    <div class="welcome">PAYMENTLOGS VUE x VITE x ELECTRON BOILERPLATE</div>
+    <div class="welcome">VOROMADE VUE x VITE x ELECTRON BOILERPLATE</div>
   </div>
 </template>
 

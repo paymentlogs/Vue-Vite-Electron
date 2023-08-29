@@ -21,7 +21,7 @@ const createWindow = async () => {
     resizable: false,
     fullscreenable: false,
     roundedCorners: true,
-    title: "paymentlogs Vue Electron Boilerplate",
+    title: "voromade Vue Electron Boilerplate",
     webPreferences: {
       enableRemoteModule: true,
       nodeIntegration: true,

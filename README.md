@@ -1,4 +1,4 @@
-#### Made by [paymentlogs](https://github.com/paymentlogs)
+#### Made by [voromade](https://github.com/voromade)
 
 <h1 align="center">☄️ Vue x Vite x Bytenode Electron Boilerplate ☄️</h1>
 <h4 align="center">⭐ Don't forget to leave a star! ⭐</h4>

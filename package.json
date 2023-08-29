@@ -2,7 +2,7 @@
   "name": "vue3-vite-elctron-boilerplate",
   "version": "0.0.0",
   "main": "packages/backend/background.js",
-  "author": "paymentlogs",
+  "author": "voromade",
   "private": true,
   "license": "MIT",
   "scripts": {
@@ -47,7 +47,7 @@
   "build": {
     "afterPack": "./packages/scripts/armor.js",
     "copyright": "Copyright © 2022 ${author}",
-    "productName": "PaymentLogs Vue Template",
+    "productName": "voromade Vue Template",
     "appId": "payment.logs",
     "directories": {
       "output": "Production Builds/Version ${version}"
@@ -56,7 +56,7 @@
       "oneClick": true,
       "perMachine": false,
       "allowToChangeInstallationDirectory": false,
-      "shortcutName": "PaymentLogs Vue Template"
+      "shortcutName": "voromade Vue Template"
     },
     "files": [
       "node_modules/**/*",
